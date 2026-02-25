@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Name I Need &#x2014; Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#C9A84C;--gold-light:#E8CC7A;--gold-dark:#8B6914;--ink:#0D0D0D;--parchment:#F5EDD6;--green:#2D5A3D;--green-light:#4A8C62;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(201,168,76,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(45,90,61,.1) 0%,transparent 50%),repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(201,168,76,.02) 40px,rgba(201,168,76,.02) 41px);pointer-events:none;z-index:0;}
+.container{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:20px;}
+.screen{display:none;}.screen.active{display:block;}
+#start-screen{text-align:center;padding:60px 20px;}
+.arabic-title{font-family:'Amiri',serif;font-size:clamp(2.5rem,8vw,5rem);color:var(--gold);line-height:1.2;margin-bottom:8px;text-shadow:0 0 60px rgba(201,168,76,.3);letter-spacing:2px;}
+.series-tag{font-size:.75rem;letter-spacing:4px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:24px;}
+.english-title{font-size:clamp(1.4rem,4vw,2.2rem);font-weight:300;color:var(--parchment);margin-bottom:8px;letter-spacing:1px;}
+.subtitle{font-size:.9rem;color:rgba(245,237,214,.5);margin-bottom:16px;font-style:italic;}
+.creator-line{font-size:.78rem;color:rgba(201,168,76,.6);margin-bottom:40px;letter-spacing:1px;}
+.creator-line span{color:var(--gold);}
+.divider{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:28px auto;}
+.stats-row{display:flex;justify-content:center;gap:48px;margin-bottom:48px;}
+.stat-num{font-family:'Amiri',serif;font-size:2.5rem;color:var(--gold);line-height:1;}
+.stat-label{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:rgba(245,237,214,.45);margin-top:4px;}
+.names-preview{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:48px;max-width:600px;margin-left:auto;margin-right:auto;}
+.name-pill{font-family:'Amiri',serif;font-size:.9rem;padding:6px 16px;border:1px solid rgba(201,168,76,.3);border-radius:20px;color:var(--gold-light);background:rgba(201,168,76,.05);}
+.start-btn{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:var(--ink);border:none;padding:18px 64px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;cursor:pointer;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:all .3s;}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,168,76,.4);}
+#quiz-screen{padding:20px 0;}
+.progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding:0 4px;}
+.q-counter{font-size:.75rem;letter-spacing:3px;text-transform:uppercase;color:rgba(245,237,214,.4);}
+.score-display{font-family:'Amiri',serif;font-size:1.4rem;color:var(--gold);}
+.progress-bar-wrap{height:3px;background:rgba(201,168,76,.15);border-radius:2px;margin-bottom:32px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-light));border-radius:2px;transition:width .6s ease;}
+.question-card{background:rgba(245,237,214,.04);border:1px solid rgba(201,168,76,.18);border-radius:4px;padding:32px;margin-bottom:24px;position:relative;overflow:hidden;animation:slideIn .4s ease;}
+.question-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+@keyframes slideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.q-tag{font-size:.65rem;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:16px;opacity:.7;}
+.question-text{font-size:clamp(1rem,2.5vw,1.2rem);font-weight:400;line-height:1.65;color:var(--parchment);margin-bottom:8px;}
+.arabic-snippet{font-family:'Amiri',serif;font-size:1.4rem;color:var(--gold-light);text-align:right;margin:16px 0 8px;direction:rtl;line-height:2;}
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+@media(max-width:540px){.answers-grid{grid-template-columns:1fr;}}
+.answer-btn{position:relative;background:rgba(245,237,214,.04);border:1px solid rgba(201,168,76,.2);border-radius:3px;padding:16px 20px;text-align:left;cursor:pointer;transition:all .25s;color:var(--parchment);font-family:'DM Sans',sans-serif;font-size:.9rem;line-height:1.5;display:flex;align-items:flex-start;gap:12px;min-height:72px;}
+.answer-btn:hover:not(:disabled){background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.5);transform:translateX(4px);}
+.answer-letter{font-family:'Amiri',serif;font-size:1.1rem;color:var(--gold);flex-shrink:0;margin-top:1px;}
+.answer-btn.correct{background:rgba(45,90,61,.35);border-color:var(--green-light);color:#8FD4A8;}
+.answer-btn.wrong{background:rgba(139,32,32,.25);border-color:#C0504A;color:#E89090;}
+.answer-btn.reveal{background:rgba(45,90,61,.1);border-color:rgba(79,160,110,.2);color:rgba(245,237,214,.4);}
+.answer-btn:disabled{cursor:default;}
+.explanation-box{margin-top:20px;padding:20px 24px;background:rgba(201,168,76,.07);border-left:3px solid var(--gold);border-radius:0 3px 3px 0;font-size:.88rem;line-height:1.7;color:rgba(245,237,214,.8);animation:fadeIn .4s ease;display:none;}
+.explanation-box.show{display:block;}
+.explanation-box strong{color:var(--gold-light);font-weight:600;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.next-btn{display:none;margin-top:24px;background:transparent;border:1px solid var(--gold);color:var(--gold);padding:14px 40px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .25s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+.next-btn.show{display:block;}
+.next-btn:hover{background:rgba(201,168,76,.15);}
+#result-screen{text-align:center;padding:60px 20px;}
+.result-arabic{font-family:'Amiri',serif;font-size:3rem;color:var(--gold);margin-bottom:8px;}
+.result-score-big{font-family:'Amiri',serif;font-size:clamp(4rem,15vw,8rem);color:var(--gold);line-height:1;margin:24px 0 8px;text-shadow:0 0 80px rgba(201,168,76,.4);}
+.result-label{font-size:.75rem;letter-spacing:4px;text-transform:uppercase;color:rgba(245,237,214,.4);margin-bottom:32px;}
+.result-message{font-family:'Amiri',serif;font-size:1.3rem;font-style:italic;color:var(--parchment);max-width:500px;margin:0 auto 32px;line-height:1.7;}
+.result-breakdown{display:flex;justify-content:center;gap:40px;margin-bottom:48px;}
+.breakdown-num{font-family:'Amiri',serif;font-size:2rem;color:var(--gold);}
+.breakdown-label{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:rgba(245,237,214,.4);}
+.replay-btn{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:var(--ink);border:none;padding:16px 56px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;cursor:pointer;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);transition:all .3s;}
+.replay-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(201,168,76,.4);}
+.ornament{font-family:'Amiri',serif;color:rgba(201,168,76,.3);font-size:2rem;margin:16px 0;}
+.result-creator{font-size:.72rem;color:rgba(201,168,76,.4);margin-top:32px;letter-spacing:2px;}
+.result-creator span{color:rgba(201,168,76,.7);}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div id="start-screen" class="screen active">
+  <div class="arabic-title">&#x627;&#x644;&#x623;&#x633;&#x645;&#x627;&#x621; &#x627;&#x644;&#x62D;&#x633;&#x646;&#x649;</div>
+  <div class="series-tag">Yaqeen Institute &middot; Ramadan 2026</div>
+  <div class="english-title">The Name I Need</div>
+  <div class="subtitle">Dr. Omar Suleiman &middot; Cumulative Quiz</div>
+  <div class="creator-line">Created by <span>Sumaiya Tasnim</span> using Claude</div>
+  <div class="divider"></div>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-num">30</div><div class="stat-label">Questions</div></div>
+    <div class="stat"><div class="stat-num">8</div><div class="stat-label">Episodes</div></div>
+    <div class="stat"><div class="stat-num">20+</div><div class="stat-label">Names</div></div>
+  </div>
+  <div class="names-preview">
+    <span class="name-pill">Ar-Rahm&#x101;n</span><span class="name-pill">Ar-Rah&#x12B;m</span><span class="name-pill">Ar-Ra&#x16B;f</span>
+    <span class="name-pill">Al-Il&#x101;h</span><span class="name-pill">Al-Ahad</span><span class="name-pill">Al-Witr</span>
+    <span class="name-pill">An-N&#x16B;r</span><span class="name-pill">Al-H&#x101;d&#x12B;</span><span class="name-pill">Al-Waliyy</span>
+    <span class="name-pill">Al-Barr</span><span class="name-pill">Al-Malik</span><span class="name-pill">Al-Jal&#x12B;l</span>
+    <span class="name-pill">Al-Kh&#x101;liq</span><span class="name-pill">Al-Mu&#x1E63;awwir</span>
+    <span class="name-pill">As-&#x1E62;amad</span><span class="name-pill">Al-Haqq</span><span class="name-pill">Al-W&#x101;si&#x02BF;</span>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">Begin &#x203A;</button>
+</div>
+
+<div id="quiz-screen" class="screen">
+  <div class="progress-header">
+    <div class="q-counter" id="q-counter">Question 1 of 30</div>
+    <div class="score-display">&#x2B50; <span id="score-num">0</span></div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
+  <div id="question-area"></div>
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question &#x2192;</button>
+</div>
+
+<div id="result-screen" class="screen">
+  <div class="ornament">&#x2756; &#x2756; &#x2756;</div>
+  <div class="result-arabic">&#x645;&#x627; &#x634;&#x627;&#x621; &#x627;&#x644;&#x644;&#x647;</div>
+  <div class="result-score-big" id="final-score">0</div>
+  <div class="result-label">out of 30</div>
+  <div class="result-message" id="result-msg"></div>
+  <div class="divider"></div>
+  <div class="result-breakdown">
+    <div class="breakdown-item"><div class="breakdown-num" id="correct-count">0</div><div class="breakdown-label">Correct</div></div>
+    <div class="breakdown-item"><div class="breakdown-num" id="wrong-count">0</div><div class="breakdown-label">Missed</div></div>
+    <div class="breakdown-item"><div class="breakdown-num" id="pct">0%</div><div class="breakdown-label">Score</div></div>
+  </div>
+  <button class="replay-btn" onclick="restartQuiz()">Try Again &#x21BA;</button>
+  <div class="result-creator">Created by <span>Sumaiya Tasnim</span> using Claude</div>
+</div>
+
+</div>
+<script>
+// Questions: correct answer is always index 0 in the options array.
+// At render time we shuffle so the correct answer lands in a random position (A/B/C/D).
+// This means: no position bias, no length bias hints.
+var Q = [];
+
+function initQuestions() {
+  Q = [
+    {
+      tag: "Root Word Play",
+      q: "Three names \u2014 Ar-Rahm\u0101n, Ar-Rah\u012bm, and Ar-Ra\u016bf \u2014 all share the root \u0631-\u062d-\u0645. What physical image does this root evoke in classical Arabic?",
+      arabic: "\u0627\u0644\u0631\u064e\u0651\u062d\u0652\u0645\u064e\u0670\u0646\u064f \u0627\u0644\u0631\u064e\u0651\u062d\u0650\u064a\u0645\u0650",
+      options: [
+        "The womb (rahm) \u2014 warmth, protection, unconditional nurturing",
+        "A flowing river of sustenance spreading outward",
+        "A shading tree in the desert giving rest",
+        "A flame that gives warmth but never goes out"
+      ],
+      explain: "Al-rahm (\u0627\u0644\u0631\u062d\u0645) \u2014 the womb \u2014 is the root of all three mercy names. Just as a mother\u2019s mercy flows from her womb, Allah\u2019s mercy is even more encompassing. The Prophet \ufdfa said: Allah divided mercy into 100 parts, sending one to this world and reserving 99."
+    },
+    {
+      tag: "Quranic + Name Combination",
+      q: "Ar-Rahm\u0101n encompasses all creation while Ar-Rah\u012bm is reserved for the believers. Which Quranic phrase most directly confirms this distinction?",
+      arabic: "\u0648\u064e\u0643\u064e\u0627\u0646\u064e \u0628\u0650\u0627\u0644\u0652\u0645\u064f\u0624\u0652\u0645\u0650\u0646\u0650\u064a\u0646\u064e \u0631\u064e\u062d\u0650\u064a\u0645\u064b\u0627",
+      options: [
+        "Wa k\u0101na bil-mu\u2019min\u012bna Rah\u012bm\u0101 \u2014 He is Rah\u012bm specifically to the believers (33:43)",
+        "Inna Allaha Ghaf\u016brun Rah\u012bm \u2014 forgiving and merciful universally",
+        "Bismillah ir-Rahm\u0101n ir-Rah\u012bm \u2014 implying both names are equal",
+        "Ar-Rahm\u0101n \u2018alal-\u2018arshi isaw\u0101 \u2014 His throne encompasses all"
+      ],
+      explain: "Surah Al-Ahz\u0101b 33:43 specifically reserves Ar-<strong>Rah\u012bm</strong> for the believers. Ar-<strong>Rahm\u0101n</strong> by contrast appears in contexts of all creation: Ar-Rahm\u0101n \u2018alal-\u2018arshi isaw\u0101 \u2014 His throne encompasses everything without distinction."
+    },
+    {
+      tag: "Deep Dive",
+      q: "Ar-Ra\u016bf (\u0627\u0644\u0631\u0624\u0648\u0641) appears only 11 times in the Quran vs. Ar-Rah\u012bm\u2019s 114. What makes it distinct? Its root describes a mercy that responds to what specific condition?",
+      options: [
+        "Fragility, weakness, and suffering \u2014 a mercy that bends toward the one in pain",
+        "General creation with no particular distinction or trigger",
+        "Abundance of blessings freely given without a condition",
+        "Deep knowledge and intellectual understanding of truth"
+      ],
+      explain: "<strong>Ar-Ra\u016bf</strong> from root \u0631-\u0623-\u0641 describes a mercy activated by vulnerability. It appears after battle (9:117), about the Prophet\u2019s care for believers (9:128), and when people are on the edge. It is the mercy that bends down toward the one who is breaking."
+    },
+    {
+      tag: "Root Word + Tawheed",
+      q: "Al-Il\u0101h (\u0627\u0644\u0625\u0644\u0647) doesn\u2019t just mean God \u2014 its root \u0623-\u0644-\u0647 describes something the heart does involuntarily. What does this root reveal about worship?",
+      options: [
+        "The heart loves, is bewildered by, and runs toward its il\u0101h \u2014 your il\u0101h is whatever owns your heart",
+        "Worship is primarily physical ritual and outward obligation",
+        "God demands obedience from a position of power alone",
+        "Worship is a transaction: you give obedience, He gives reward"
+      ],
+      explain: "The root \u0623-\u0644-\u0647 means to be bewildered, to love intensely, to be drawn toward with the whole self. Ibn al-Qayyim said: worship is complete love combined with complete submission combined with complete humility. Your <strong>il\u0101h</strong> is whatever owns your heart \u2014 which is why modern idolatry needs no statues."
+    },
+    {
+      tag: "Quranic + Name Distinction",
+      q: "Al-Ahad and Al-W\u0101hid both translate as One but differ fundamentally. Surah Al-Ikhl\u0101\u1e63 uses Al-Ahad. What is the essential difference between them?",
+      arabic: "\u0642\u064f\u0644\u0652 \u0647\u064f\u0648\u064e \u0627\u0644\u0644\u0651\u064e\u0647\u064f \u0623\u064e\u062d\u064e\u062f\u064c",
+      options: [
+        "Al-W\u0101hid means one in number among others; Al-Ahad means the Alone One \u2014 no category exists to compare Him within",
+        "Al-Ahad is stronger in intensity; Al-W\u0101hid is the weaker form",
+        "Al-Ahad is used for believers; Al-W\u0101hid applies to all creation",
+        "They are exact synonyms with no meaningful theological distinction"
+      ],
+      explain: "Al-<strong>W\u0101hid</strong> = numerically one (you can count others alongside). Al-<strong>Ahad</strong> = the Alone One with no parallel, no category, no comparison. Surah Al-Ikhl\u0101\u1e63 uses Ahad precisely because even saying \u2018one God among possible gods\u2019 misunderstands the point \u2014 there is no category He belongs to."
+    },
+    {
+      tag: "Hadith + Name",
+      q: "The Prophet \ufdfa said: Allah is Witr and He loves al-witr. What prayer is named after this concept and what does performing it symbolize?",
+      options: [
+        "Witr prayer \u2014 ending the night on an odd number, mirroring Allah\u2019s own singular unmatched nature",
+        "Tahajjud \u2014 the extended night vigil of the truly devoted",
+        "Fajr \u2014 the prayer that stands alone before the day begins",
+        "Duha \u2014 the midmorning prayer of gratitude and remembrance"
+      ],
+      explain: "The Prophet \ufdfa said: Make Witr your last prayer of the night. Ending on an <strong>odd</strong> number mirrors Al-Witr \u2014 the Uniquely Odd One. It is a physical act of tawheed, closing your worship in the image of His singularity."
+    },
+    {
+      tag: "Quranic + Root Word",
+      q: "Ayat An-N\u016br (24:35) says Allah is the Light of the heavens and the earth. But An-N\u016br as a name means more than a source of light. What is the deeper theological distinction?",
+      arabic: "\u0627\u0644\u0644\u0651\u064e\u0647\u064f \u0646\u064f\u0648\u0631\u064f \u0627\u0644\u0633\u064e\u0651\u0645\u064e\u0627\u0648\u064e\u0627\u062a\u0650 \u0648\u064e\u0627\u0644\u0652\u0623\u064e\u0631\u0652\u0636\u0650",
+      options: [
+        "He IS light itself \u2014 not a lamp that could go out, but the reality through which anything can be known or seen at all",
+        "He illuminates only the physical world and its visible objects",
+        "Light here is purely a metaphor referring to His angels",
+        "The light refers exclusively to the Quran as a written text"
+      ],
+      explain: "<strong>An-N\u016br</strong> means He is the ontological source of all illumination. Without Him, not just physical darkness but epistemic darkness \u2014 you cannot know anything true, see anything real, or navigate anything meaningful. Ibn \u02bfAbb\u0101s said: He is the Guide of the inhabitants of the heavens and earth."
+    },
+    {
+      tag: "Name Comparison",
+      q: "Al-H\u0101d\u012b and Ar-Rash\u012bd both relate to guidance. What is the essential distinction between them?",
+      options: [
+        "Al-H\u0101d\u012b guides generally; Ar-Rash\u012bd guides with perfect precision \u2014 calibrated exactly to your situation with no waste",
+        "Al-H\u0101d\u012b guides the intellect while Ar-Rash\u012bd guides the heart exclusively",
+        "Al-H\u0101d\u012b appears in the Quran only; Ar-Rash\u012bd is found only in hadith",
+        "They are functionally identical names with the same meaning"
+      ],
+      explain: "<strong>Al-H\u0101d\u012b</strong> = the Guide (broad, general). <strong>Ar-Rash\u012bd</strong> = from rashad \u2014 mature, efficient guidance never misdirected. He doesn\u2019t give you generic directions; He gives you your path with your context already calculated in. The reward of guidance is more guidance."
+    },
+    {
+      tag: "Root Word Play",
+      q: "Al-Mub\u012bn shares root \u0628-\u064a-\u0646 with bayn meaning between. What does this root tell us about what Al-Mub\u012bn actually does?",
+      options: [
+        "He separates truth from falsehood with such clarity that no confusion remains between them",
+        "He places truth between two equal interpretations for us to choose from",
+        "He reveals truth only to those caught midway between guidance and misguidance",
+        "He serves as the communicating intermediary between angels and humans"
+      ],
+      explain: "Root \u0628-\u064a-\u0646 gives us bayyana (to clarify), tib\u0101n (clear exposition), and bayyinah (clear evidence). Al-<strong>Mub\u012bn</strong> = the One who makes the line between truth and falsehood so crisp there is no blurring. The Quran calls itself Kit\u0101bun Mub\u012bn \u2014 a book of clear distinction."
+    },
+    {
+      tag: "Root Word + Name",
+      q: "Al-Waliyy comes from \u0648-\u0644-\u064a meaning closeness. Which set of words ALL derives from this exact root?",
+      options: [
+        "Wal\u012b (guardian/saint), mawl\u0101 (protector-master), and tawalli (to take as an ally)",
+        "Wudu (ritual purity), wahy (revelation), and waqf (endowment)",
+        "Wil\u0101yah, witr, and w\u0101hid \u2014 three concepts of divine nearness",
+        "Walad (child), w\u0101lid\u0101yn (parents), and mawdudah (affection)"
+      ],
+      explain: "Root \u0648-\u0644-\u064a = nearness, adjacency, guardianship. From it: <strong>wal\u012b</strong> (saint/guardian), <strong>mawl\u0101</strong> (protector-master), <strong>tawalla</strong> (to take as ally), <strong>wil\u0101yah</strong> (sacred guardianship). Allah as Al-Waliyy means He is your closest companion \u2014 nearer to you than your own vein."
+    },
+    {
+      tag: "Quranic + Name",
+      q: "Al-Barr means the Stable Source of all goodness. The root \u0628-\u0631-\u0631 appears in a famous ayah about what birr requires. Which ayah?",
+      arabic: "\u0644\u064e\u0646 \u062a\u064e\u0646\u064e\u0627\u0644\u064f\u0648\u0627 \u0627\u0644\u0652\u0628\u0650\u0631\u064e\u0651 \u062d\u064e\u062a\u064e\u0651\u0649\u0670 \u062a\u064f\u0646\u0641\u0650\u0642\u064f\u0648\u0627 \u0645\u0650\u0645\u064e\u0651\u0627 \u062a\u064f\u062d\u0650\u0628\u064f\u0651\u0648\u0646\u064e",
+      options: [
+        "Lan tan\u0101l\u016bl birra hatt\u0101 tunfiq\u016b mimm\u0101 tuhib\u016b\u016bn \u2014 you will never reach birr until you give from what you love (3:92)",
+        "Inna akramakum \u02bfinda All\u0101hi atq\u0101kum \u2014 the most noble is most God-conscious",
+        "Wa bil-w\u0101lidayni i\u1e25s\u0101n\u0101 \u2014 and be dutiful to parents in all things",
+        "Inna ma\u02bfal-\u02bfusri yusr\u0101 \u2014 with every hardship comes ease"
+      ],
+      explain: "S\u016brah \u0100l-\u02bfImr\u0101n 3:92 \u2014 the word <strong>birr</strong> (goodness/righteousness) shares its root with Al-<strong>Barr</strong>. Allah IS the source of all birr, and to approach that quality requires giving what you love most. The root demands sacrifice, not just sentiment."
+    },
+    {
+      tag: "Hadith + Name",
+      q: "Ar-Raf\u012bq means the Gentle Companion. This name appears in a moving hadith about the Prophet\u2019s final words. What did he say as he chose between this world and the next?",
+      options: [
+        "All\u0101humma Ar-Raf\u012bq Al-A\u02bfl\u0101 \u2014 O Allah, the Highest Companion \u2014 choosing Allah over remaining in this world",
+        "Make this ummah strong \u2014 a final command for the community he was leaving",
+        "Take care of the prayer \u2014 his parting advice to the companions gathered",
+        "L\u0101 il\u0101ha illa All\u0101h \u2014 his final declaration of faith and testimony"
+      ],
+      explain: "In his final moments the Prophet \ufdfa was given a choice between this world and meeting his Lord. He said: <strong>All\u0101humma Ar-Raf\u012bq Al-A\u02bfl\u0101</strong> \u2014 O Allah, the Highest Gentle Companion. He chose Allah as his companion over remaining. Even the name of his departure was a name of love, not fear."
+    },
+    {
+      tag: "Quranic + Root Word",
+      q: "Different qir\u0101\u02be\u0101t of Al-F\u0101tiha read both M\u0101lik AND Malik as valid recitations of the same ayah. What does having BOTH valid readings communicate theologically?",
+      arabic: "\u0645\u064e\u0627\u0644\u0650\u0643\u0650 \u064a\u064e\u0648\u0652\u0645\u0650 \u0627\u0644\u062f\u0651\u0650\u064a\u0646\u0650",
+      options: [
+        "Allah is both the King with full authority AND the total Owner with complete possession \u2014 both dimensions are His on the Day of Judgment",
+        "There was some uncertainty in the transmission of this particular verse",
+        "One recitation is considered more authentic than the other by most scholars",
+        "The difference is only phonetic with no meaningful theological implication"
+      ],
+      explain: "<strong>M\u0101lik</strong> = the Owner (full possession). <strong>Malik</strong> = the King (authority, decree, rule). Both recitations being confirmed means: on Yawm ad-D\u012bn He not only rules \u2014 He <em>owns</em>. No treasury, no court, no power remains. It all reverts to Him alone."
+    },
+    {
+      tag: "Name + Theology",
+      q: "Al-Jal\u012bl and Al-Jam\u0101l sit together in classical Islamic theology as Jal\u0101l and Jam\u0101l. What do both dimensions together represent about relating to Allah?",
+      options: [
+        "Both awe-inspiring majesty (Jal\u0101l) and intimate beauty (Jam\u0101l) are needed \u2014 the complete relationship requires both reverence and loving nearness",
+        "Fear alone is the correct stance \u2014 love is secondary to proper awe",
+        "Love alone is correct \u2014 fear is incompatible with true Islamic spirituality",
+        "Jal\u0101l is for scholars and specialists; Jam\u0101l is for ordinary believers"
+      ],
+      explain: "The theologians said: whoever knows only Jal\u0101l will be paralyzed by fear. Whoever knows only Jam\u0101l will be heedless through false comfort. But whoever holds both has the complete portrait of Allah. This is why the great du\u02bfa combines both: <em>Y\u0101 Dha l-Jal\u0101li wal-Ikr\u0101m.</em>"
+    },
+    {
+      tag: "Quranic + Al-W\u0101si\u02bf",
+      q: "Ayat Al-Kurs\u012b (2:255) directly uses the root \u0648-\u0633-\u0639 connecting to Al-W\u0101si\u02bf. Which specific phrase contains it?",
+      arabic: "\u0648\u064e\u0633\u0650\u0639\u064e \u0643\u064f\u0631\u0652\u0633\u0650\u064a\u064e\u0651\u0647\u064f \u0627\u0644\u0633\u064e\u0651\u0645\u064e\u0627\u0648\u064e\u0627\u062a\u0650 \u0648\u064e\u0627\u0644\u0652\u0623\u064e\u0631\u0652\u0636\u0650",
+      options: [
+        "Wasi\u02bfa kurs\u012byyuhu as-sam\u0101w\u0101ti wal-ar\u1e0d \u2014 His Kurs\u012b encompasses the heavens and earth",
+        "L\u0101 ta\u02bfkhudhuhu sinatun wa l\u0101 nawm \u2014 He never sleeps or slumbers",
+        "Huwal-\u02bfAliyyul-\u02bfAz\u012bm \u2014 He is the High, the Great, the Mighty",
+        "Lahu m\u0101 f\u012b as-sam\u0101w\u0101ti wa m\u0101 f\u012b al-ar\u1e0d \u2014 to Him belongs the heavens and earth"
+      ],
+      explain: "Ayat Al-Kurs\u012b uses <em>wasi\u02bfa</em> \u2014 the root \u0648-\u0633-\u0639 \u2014 linking directly to Al-<strong>W\u0101si\u02bf</strong>. His footstool encompasses the entire cosmos and He never tires of preserving it. The vastness is effortless for the Vast One."
+    },
+    {
+      tag: "Root Word + Grammar",
+      q: "Al-Kh\u0101liq and Al-Khall\u0101q share the root \u062e-\u0644-\u0642 but Al-Khall\u0101q uses the fa\u02bfe\u02fe\u02felal intensive pattern. What does this grammatical form communicate that Al-Kh\u0101liq alone does not?",
+      arabic: "\u0648\u064e\u0647\u064f\u0648\u064e \u0627\u0644\u0652\u062e\u064e\u0644\u0651\u064e\u0627\u0642\u064f \u0627\u0644\u0652\u0639\u064e\u0644\u0650\u064a\u0645\u064f",
+      options: [
+        "Creation is continuous and never-ceasing \u2014 Al-Khall\u0101q is the Ever-Creating One, not just the One who created once",
+        "His creation was a single one-time act of immense concentrated power",
+        "He creates exclusively for believers and those who are righteous",
+        "The pattern refers specifically and only to creating from absolute nothing"
+      ],
+      explain: "The <strong>fa\u02bfe\u02fe\u02felal</strong> pattern (\u0641\u0639\u064e\u0651\u0627\u0644) in Arabic = continuous, repeated, habitual action at scale. Al-<strong>Kh\u0101liq</strong> = Creator (title). Al-<strong>Khall\u0101q</strong> = the Ever-Creating One who never stops. The universe is still expanding, stars still forming. Wa huwa al-Khall\u0101qul-\u02bfAl\u012bm (36:81)."
+    },
+    {
+      tag: "Root Word Play",
+      q: "Al-B\u0101ri\u02bf creates with perfect distinction. Its root \u0628-\u0631-\u0623 also gives us bar\u0101\u02beah. What does bar\u0101\u02beah mean and how does it connect creation to Islamic legal concepts?",
+      options: [
+        "Innocence and acquittal \u2014 to be clearly separated from something; creation is an act of divine individuation",
+        "Blessing \u2014 all things created by Allah are inherently blessed",
+        "Strength \u2014 creation requires tremendous force to bring into existence",
+        "Knowledge \u2014 only the all-knowing One can create with such precision"
+      ],
+      explain: "<strong>Bar\u0101\u02beah</strong> = to be acquitted, cleared, separated distinctly. Surah Bar\u0101\u02beah (At-Tawbah) opens with a declaration of separation. Al-<strong>B\u0101ri\u02bf</strong> creates by making each thing distinct \u2014 no two fingerprints, no two souls, no two leaves identical. His creation is an act of divine individuation."
+    },
+    {
+      tag: "Root Word + Modern Arabic",
+      q: "Al-Mu\u1e63awwir fashions every form (\u1e63\u016bra). The root \u0635-\u0648-\u0631 is used in modern Arabic every day. What is the word and what does it reveal?",
+      options: [
+        "S\u016brah/mu\u1e63awwir \u2014 photograph/photographer; every human photographer imitates what Al-Mu\u1e63awwir perfected in creation",
+        "Sabr (patience) \u2014 forming beautiful things requires patience",
+        "Sal\u0101h (prayer) \u2014 worship gradually shapes the soul\u2019s inner form",
+        "Sir\u0101\u1e6d (path) \u2014 the path you walk shapes who you become"
+      ],
+      explain: "The modern Arabic word for photograph is <strong>\u1e63\u016brah</strong> and for photographer is <strong>mu\u1e63awwir</strong> \u2014 the same word as Allah\u2019s name. This is why the hadith about image-makers carries such weight: those who make \u1e63uwar are claiming the act of the Divine Mu\u1e63awwir. Every face you have ever seen is His custom design."
+    },
+    {
+      tag: "Quranic Cluster",
+      q: "Surah Al-Hashr ends with three consecutive ayat (59:22-24) containing the Quran\u2019s highest density of Allah\u2019s names. What category appears in 59:22-23 BEFORE the Creator names in 59:24?",
+      options: [
+        "Names of sovereignty and holiness \u2014 Al-Malik, Al-Qudd\u016bs, As-Sal\u0101m, Al-Mu\u02bemin, Al-Muhaymin, Al-\u02bfAz\u012bz, Al-Jabb\u0101r, Al-Mutakabbir",
+        "The mercy names \u2014 Ar-Rahm\u0101n and Ar-Rah\u012bm introducing what follows",
+        "The guidance names \u2014 Al-H\u0101d\u012b and An-N\u016br illuminating creation",
+        "The companionship names \u2014 Al-Waliyy and Al-Barr establishing intimacy"
+      ],
+      explain: "The structure is deliberate: first He is established as <strong>Sovereign and Holy</strong> (59:22-23), and only then revealed as Creator (59:24). You must know WHO is creating before you understand WHAT has been created. The throne precedes the workshop."
+    },
+    {
+      tag: "Surah Structure + As-Samad",
+      q: "As-\u1e62amad sits as the second ayah of Surah Al-Ikhl\u0101\u1e63, between Allahu Ahad and Lam yalid wa lam y\u016blad. Why does lam yalid follow directly from As-\u1e62amad?",
+      arabic: "\u0627\u0644\u0644\u0651\u064e\u0647\u064f \u0627\u0644\u0635\u064e\u0651\u0645\u064e\u062f\u064f \u2022 \u0644\u064e\u0645\u0652 \u064a\u064e\u0644\u0650\u062f\u0652 \u0648\u064e\u0644\u064e\u0645\u0652 \u064a\u064f\u0648\u0644\u064e\u062f\u0652",
+      options: [
+        "As-\u1e62amad means wholly complete with no hollow \u2014 birth requires something coming OUT of Him (a gap) or going INTO Him (a need); the name itself makes begetting logically impossible",
+        "It is simply a refutation of Christian theology with no logical link to the previous ayah",
+        "The ayah is addressing historical questions about lineage only",
+        "Lam yalid is an entirely separate topic unconnected to As-\u1e62amad"
+      ],
+      explain: "<strong>\u1e62amad</strong> = no hollow, no gaps, no interior cavity. Birth requires something to emerge FROM a space within. Parenthood requires taking something IN. Both imply interior void. Since He has NO interior void, both become structurally impossible. Al-Ikhl\u0101\u1e63 is not a list of facts but a logical architecture of divine wholeness."
+    },
+    {
+      tag: "Hadith Chain + Al-Haqq",
+      q: "The Prophet \ufdfa made a du\u02be\u0101: All\u0101humma anta al-Haqq, wa wa\u02bfduka al-Haqq... ending with wa Mu\u1e25ammadun Haqq. What is the logical structure of this chain?",
+      options: [
+        "Each truth unlocks the next: if Allah is real His promise is real; if His promise is real His word is real; if His word is real meeting Him is real; paradise and hell are real; the prophets were real; Muhammad \ufdfa confirmed all of it",
+        "It is simply a recitation of Islamic beliefs listed without logical connection",
+        "The order reflects importance with the most significant listed first",
+        "The order reflects the chronological sequence in which each was revealed"
+      ],
+      explain: "This du\u02be\u0101 is a <strong>logical cascade</strong>: once the first truth holds, each subsequent truth is entailed by it. Doubt the first and everything falls. Affirm the first and everything locks in. Dr. Suleiman calls it the truth roadmap \u2014 not a creed to recite but a chain where each link illuminates the next."
+    },
+    {
+      tag: "Cross-Name Combination",
+      q: "Dr. Suleiman maps As-\u1e62amad, Al-Haqq, and Al-W\u0101si\u02bf to three specific spiritual crises. Which mapping is correct?",
+      options: [
+        "Feeling empty \u2192 As-\u1e62amad (the Whole fills your hollow); feeling lost \u2192 Al-Haqq (Truth anchors direction); feeling trapped \u2192 Al-W\u0101si\u02bf (the Vast expands your space)",
+        "Feeling empty \u2192 Al-Haqq; feeling lost \u2192 Al-W\u0101si\u02bf; feeling trapped \u2192 As-\u1e62amad",
+        "Feeling empty \u2192 Al-W\u0101si\u02bf; feeling lost \u2192 As-\u1e62amad; feeling trapped \u2192 Al-Haqq",
+        "All three names respond to the same crisis and are essentially synonymous"
+      ],
+      explain: "<strong>As-\u1e62amad</strong> fills the hollow inside you \u2014 the one who is whole can make you whole. <strong>Al-Haqq</strong> gives your pursuit meaning and direction \u2014 when everything feels batil, He is the anchor of reality. <strong>Al-W\u0101si\u02bf</strong> removes the spiritual claustrophobia of sin \u2014 His vastness is always larger than your narrowness."
+    },
+    {
+      tag: "Quranic + Root Word",
+      q: "Al-Haqq appears as a name for the Day of Judgment: Al-H\u0101qqah in Surah 69 which opens: m\u0101 al-H\u0101qqah? What does the intensifying suffix -ah (\u0629) communicate here?",
+      arabic: "\u0627\u0644\u0652\u062d\u064e\u0627\u0642\u064e\u0651\u0629\u064f \u2022 \u0645\u064e\u0627 \u0627\u0644\u0652\u062d\u064e\u0627\u0642\u064e\u0651\u0629\u064f",
+      options: [
+        "It is intensification \u2014 this is THE reality, the day that forcefully establishes every suppressed truth and makes all denial impossible",
+        "It feminizes the noun \u2014 the Day of Judgment is grammatically feminine in Arabic",
+        "It functions as a diminutive form that makes the word smaller in scope",
+        "It indicates the plural form of the underlying concept of truth"
+      ],
+      explain: "The opening of Surah 69 repeats: <em>Al-H\u0101qqah \u2014 m\u0101 al-H\u0101qqah?</em> The t\u0101\u02be marb\u016b\u1e6dah here is used for intensification and ultimate specification. This is not just a truth \u2014 it is <strong>THE</strong> truth that leaves no exit, the day that makes haqq undeniable for every soul."
+    },
+    {
+      tag: "Root Word Chain",
+      q: "Al-W\u0101si\u02bf shares root \u0648-\u0633-\u0639 with wus\u02bfahā in 2:286 and with sa\u02beah in Ibn \u02beAmir\u2019s speech: from diq ad-dunya ila sa\u02beat ad-dunya wal-\u0101khirah. What do all three share?",
+      arabic: "\u0644\u064e\u0627 \u064a\u064f\u0643\u064e\u0644\u0651\u0650\u0641\u064f \u0627\u0644\u0644\u0651\u064e\u0647\u064f \u0646\u064e\u0641\u0652\u0633\u064b\u0627 \u0625\u0650\u0644\u0651\u064e\u0627 \u0648\u064f\u0633\u0652\u0639\u064e\u0647\u064e\u0627",
+      options: [
+        "All from \u0648-\u0633-\u0639: the root of capacity and expansion. W\u0101si\u02bf = the Vast One; wus\u02beah = one\u2019s capacity; sa\u02beah = spaciousness. Sin shrinks all three; proximity to Al-W\u0101si\u02bf expands all three.",
+        "They are unrelated \u2014 sa\u02beah means hour not expanse and comes elsewhere",
+        "Only w\u0101si\u02bf and wus\u02beah are truly related; sa\u02beah derives from a different root",
+        "Sa\u02beah refers only to time not to spatial or spiritual capacity"
+      ],
+      explain: "All three from <strong>\u0648-\u0633-\u0639</strong>: <em>w\u0101si\u02bf</em> (the vast), <em>wus\u02beah</em> (capacity), <em>sa\u02beah</em> (expansiveness). The Quran says He never burdens beyond capacity \u2014 and He is the Infinite Capacity Himself. Ibn \u02beAmir\u2019s speech was literally: we bring you from constriction (diq) to the W\u0101si\u02bf Himself."
+    },
+    {
+      tag: "Quran + Multi-Name",
+      q: "The Quran says: Qul law k\u0101na al-ba\u1e25ru mid\u0101dan li-kalim\u0101ti Rabb\u012b la-nafida al-ba\u1e25r (18:109). Which two names from the series does this single image connect?",
+      arabic: "\u0642\u064f\u0644 \u0644\u064e\u0651\u0648\u0652 \u0643\u064e\u0627\u0646\u064e \u0627\u0644\u0652\u0628\u064e\u062d\u0652\u0631\u064f \u0645\u0650\u062f\u064e\u0627\u062f\u064b\u0627 \u0644\u0651\u0650\u0643\u064e\u0644\u0650\u0645\u064e\u0627\u062a\u0650 \u0631\u064e\u0628\u0651\u0650\u064a",
+      options: [
+        "Al-W\u0101si\u02bf (even infinite ocean cannot hold His words) and Al-Haqq (His kal\u012bm\u0101t are truth \u2014 every word is haqq)",
+        "Ar-Rahm\u0101n and Ar-Rah\u012bm \u2014 mercy is the overarching theme of Surah Al-Kahf",
+        "Al-Kh\u0101liq and Al-B\u0101ri\u02bf \u2014 creation is vast and never-ending in scope",
+        "As-\u1e62amad and Al-Malik \u2014 sovereignty and wholeness combined together"
+      ],
+      explain: "The ocean as endless ink images two things: <strong>Al-W\u0101si\u02bf</strong> \u2014 even infinite expanse cannot contain His words; and <strong>Al-Haqq</strong> \u2014 His words are not just numerous but true, pointing to ultimate reality. The word mid\u0101d (a continuously replenishing ink) also echoes creation that never runs out."
+    },
+    {
+      tag: "Story + Names",
+      q: "The Prophet \ufdfa described Musa and Al-Khidr on a ship: a bird pecked water from the ocean and Al-Khidr said their combined knowledge compared to Allah\u2019s is like what the bird took. Which names does this best illustrate?",
+      options: [
+        "Al-W\u0101si\u02bf (His knowledge is the ocean that never empties) and Al-Haqq (Al-Khidr\u2019s \u02bfilm ladunni was not just vast but precisely true)",
+        "Ar-Rahm\u0101n and Ar-Rah\u012bm \u2014 mercy runs throughout the story of Musa",
+        "Al-H\u0101d\u012b and Ar-Rash\u012bd \u2014 guidance is the clear central theme here",
+        "Al-Kh\u0101liq and Al-Mu\u1e63awwir \u2014 the story is ultimately about creation"
+      ],
+      explain: "The ocean = <strong>Al-W\u0101si\u02bf</strong>\u2019s knowledge with no bottom. The bird\u2019s sip = all human knowledge ever accumulated. But Al-Khidr\u2019s knowledge was <em>\u02bfilm ladunni</em> \u2014 knowledge from Allah that was <strong>Al-Haqq</strong>: precisely true, every detail confirmed. Vastness plus truth = divine knowledge in its completeness."
+    },
+    {
+      tag: "Multi-Name Cross-Reference",
+      q: "The series says created things always leave a gap: a job gives income but not meaning; a relationship gives companionship but not completion; fame gives attention but not validation. Which two names explain WHY?",
+      arabic: "\u0643\u064f\u0644\u064e\u0651 \u0634\u064e\u064a\u0652\u0621\u0652 \u0647\u064e\u0627\u0644\u0650\u0643\u064c \u0625\u0650\u0644\u064e\u0651\u0627 \u0648\u064e\u062c\u0652\u0647\u064e\u0647\u064f",
+      options: [
+        "As-\u1e62amad (only the wholly complete One can complete you; created things are themselves hollow) and Al-Haqq (created things are batil when disconnected from Him \u2014 everything perishes except His face, 28:88)",
+        "Ar-Rahm\u0101n and Ar-Rah\u012bm \u2014 we simply need more of His direct mercy",
+        "Al-W\u0101si\u02bf and Al-Kh\u0101liq \u2014 creation is vast but inherently limited by design",
+        "Al-Waliyy and Al-Barr \u2014 even the closest friends always disappoint eventually"
+      ],
+      explain: "<strong>As-\u1e62amad</strong> = He is whole, all else is hollow \u2014 hollow things cannot make you whole. <strong>Al-Haqq</strong> = everything disconnected from Him is batil \u2014 <em>Kulla shay\u02bein h\u0101likun ill\u0101 wajhah</em> (28:88). A job, a relationship, fame \u2014 all expire. Only what is connected to Al-Haqq has permanent value."
+    },
+    {
+      tag: "Spiritual Anatomy",
+      q: "Dr. Suleiman describes sin as spiritual claustrophobia using the Arabic word diq (\u0636\u064a\u0642 \u2014 constriction). Which name from the series is its direct linguistic antonym?",
+      options: [
+        "Al-W\u0101si\u02bf \u2014 from root \u0648-\u0633-\u0639 meaning expansion and capacity, the direct opposite of \u0636-\u064a-\u0642 (constriction)",
+        "As-\u1e62amad \u2014 wholeness vs. hollowness in the spiritual life",
+        "Al-Haqq \u2014 truth as the opposite of falsehood and vanity",
+        "An-N\u016br \u2014 light as the opposite of spiritual and physical darkness"
+      ],
+      explain: "In Arabic, <strong>diq (\u0636\u064a\u0642)</strong> and <strong>wus\u02be (\u0648\u0633\u0639)</strong> are direct antonyms \u2014 constriction vs. expansion. The Prophet \ufdfa said: All\u0101humma wassi\u02bf l\u012b f\u012b d\u0101r\u012b \u2014 expand my home \u2014 meaning: remove its diq with Your wus\u02be. Sin shrinks; proximity to Al-W\u0101si\u02bf expands."
+    },
+    {
+      tag: "Hijrah + Names Combo",
+      q: "The angels ask those who didn\u2019t make hijrah: Alam takun ar\u1e0du All\u0101hi w\u0101si\u02beah? (4:97). The Prophet \ufdfa defined true hijrah as leaving what Allah forbade. How do Al-W\u0101si\u02bf AND Al-Haqq both appear in this concept?",
+      arabic: "\u0623\u064e\u0644\u064e\u0645\u0652 \u062a\u064e\u0643\u064f\u0646\u0652 \u0623\u064e\u0631\u0652\u0636\u064f \u0627\u0644\u0644\u0651\u064e\u0647\u0650 \u0648\u064e\u0627\u0633\u0650\u0639\u064e\u0629\u064b",
+      options: [
+        "Al-W\u0101si\u02bf = the earth was always expansive enough to escape sin; Al-Haqq = the path of truth was always open \u2014 every claim of having no choice but to sin is shown to be batil",
+        "They don\u2019t combine here \u2014 only Al-W\u0101si\u02bf is relevant to hijrah",
+        "Al-Haqq refers to the historical hijrah; Al-W\u0101si\u02bf refers to the distance traveled",
+        "Only As-\u1e62amad is theologically relevant to the concept of hijrah"
+      ],
+      explain: "The name <em>w\u0101si\u02beah</em> is embedded in the angel\u2019s question. And Al-<strong>Haqq</strong>\u2019s opposite \u2014 <em>batil</em> \u2014 is what you were pursuing by staying in sin. True hijrah = leaving batil (Al-Haqq calls you out) through space that was always w\u0101si\u02beah (Al-W\u0101si\u02bf provides the room). Both names make excuses impossible."
+    },
+    {
+      tag: "Final Boss \u2014 All Names",
+      q: "The series closes with a du\u02be\u0101 addressing all three names from Ep. 8. Which trio maps correctly to: (1) the hollowness of sin, (2) the meaninglessness of false pursuits, (3) the suffocation of disobedience?",
+      options: [
+        "As-\u1e62amad heals the hollow; Al-Haqq restores meaning to a life of batil; Al-W\u0101si\u02bf breathes expanse back into the suffocated soul",
+        "Al-Haqq heals the hollow; Al-W\u0101si\u02bf restores meaning; As-\u1e62amad removes suffocation",
+        "Al-W\u0101si\u02bf heals the hollow; As-\u1e62amad restores meaning; Al-Haqq removes suffocation",
+        "Ar-Rahm\u0101n covers all three \u2014 the other names are secondary in this context"
+      ],
+      explain: "The full circle: sin hollows you \u2192 <strong>As-\u1e62amad</strong> makes you whole. False pursuits strip meaning \u2192 <strong>Al-Haqq</strong> restores reality. Disobedience suffocates \u2192 <strong>Al-W\u0101si\u02bf</strong> expands you again. And underneath all three is Ar-<strong>Rahm\u0101n</strong> \u2014 99 parts still waiting \u2014 ensuring the door back is always open."
+    }
+  ];
+}
+
+var current = 0;
+var score = 0;
+var answered = false;
+var shuffledQ = [];
+// shuffledOrder[i] = the shuffled options array for question i
+// correctIdx[i] = which index in the shuffled array is correct
+var shuffledOpts = [];
+var correctIdxs = [];
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function shuffleWithCorrect(options) {
+  // options[0] is always the correct answer in source data
+  var indexed = options.map(function(o, i) { return {text: o, isCorrect: i === 0}; });
+  for (var i = indexed.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = indexed[i]; indexed[i] = indexed[j]; indexed[j] = tmp;
+  }
+  var correctIdx = 0;
+  for (var k = 0; k < indexed.length; k++) {
+    if (indexed[k].isCorrect) { correctIdx = k; break; }
+  }
+  return { opts: indexed.map(function(x){return x.text;}), correct: correctIdx };
+}
+
+function startQuiz() {
+  initQuestions();
+  shuffledQ = shuffle(Q);
+  // Pre-shuffle all options
+  shuffledOpts = [];
+  correctIdxs = [];
+  for (var i = 0; i < shuffledQ.length; i++) {
+    var result = shuffleWithCorrect(shuffledQ[i].options);
+    shuffledOpts.push(result.opts);
+    correctIdxs.push(result.correct);
+  }
+  current = 0;
+  score = 0;
+  document.getElementById("score-num").textContent = "0";
+  showScreen("quiz-screen");
+  renderQuestion();
+}
+
+function showScreen(id) {
+  var screens = document.querySelectorAll(".screen");
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove("active");
+  document.getElementById(id).classList.add("active");
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+function renderQuestion() {
+  answered = false;
+  var q = shuffledQ[current];
+  var opts = shuffledOpts[current];
+  var total = shuffledQ.length;
+  document.getElementById("q-counter").textContent = "Question " + (current + 1) + " of " + total;
+  document.getElementById("progress-bar").style.width = ((current / total) * 100) + "%";
+  var nextBtn = document.getElementById("next-btn");
+  nextBtn.classList.remove("show");
+  nextBtn.textContent = (current === total - 1) ? "See Results \u2192" : "Next Question \u2192";
+  var letters = ["A", "B", "C", "D"];
+  var arabicHtml = q.arabic ? "<div class=\"arabic-snippet\">" + q.arabic + "</div>" : "";
+  var optionsHtml = opts.map(function(opt, i) {
+    return "<button class=\"answer-btn\" onclick=\"selectAnswer(" + i + ")\" id=\"opt-" + i + "\"><span class=\"answer-letter\">" + letters[i] + "</span><span>" + opt + "</span></button>";
+  }).join("");
+  document.getElementById("question-area").innerHTML =
+    "<div class=\"question-card\">" +
+    "<div class=\"q-tag\">\u2756 " + q.tag + "</div>" +
+    "<div class=\"question-text\">" + q.q + "</div>" +
+    arabicHtml +
+    "<div class=\"answers-grid\">" + optionsHtml + "</div>" +
+    "<div class=\"explanation-box\" id=\"explain-box\">" + q.explain + "</div>" +
+    "</div>";
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  var correct = correctIdxs[current];
+  for (var i = 0; i < 4; i++) {
+    var btn = document.getElementById("opt-" + i);
+    if (!btn) continue;
+    btn.disabled = true;
+    if (i === correct) btn.classList.add("correct");
+    else if (i === idx) btn.classList.add("wrong");
+    else btn.classList.add("reveal");
+  }
+  if (idx === correct) {
+    score++;
+    document.getElementById("score-num").textContent = score;
+  }
+  document.getElementById("explain-box").classList.add("show");
+  document.getElementById("next-btn").classList.add("show");
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= shuffledQ.length) { showResults(); }
+  else { renderQuestion(); }
+}
+
+function showResults() {
+  showScreen("result-screen");
+  var total = shuffledQ.length;
+  var pct = Math.round((score / total) * 100);
+  document.getElementById("final-score").textContent = score;
+  document.getElementById("correct-count").textContent = score;
+  document.getElementById("wrong-count").textContent = total - score;
+  document.getElementById("pct").textContent = pct + "%";
+  var msg = "";
+  if (pct >= 90) msg = "Whoever knows Allah\u2019s names truly knows Allah \u2014 and you are well on your way.";
+  else if (pct >= 70) msg = "The reward of learning His names is that He allows you to learn more. Keep going.";
+  else if (pct >= 50) msg = "The student is never satisfied \u2014 and that is not disappointment, it is the excitement of knowing there is always more.";
+  else msg = "Return to the ocean. Al-W\u0101si\u02bf never runs out of pearls for you to collect.";
+  document.getElementById("result-msg").textContent = msg;
+}
+
+function restartQuiz() { startQuiz(); }
+</script>
+</body>
+</html>
